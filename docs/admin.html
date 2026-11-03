@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AVANT Hub — Publicar versão</title>
+<style>
+:root{--pri:#14C8A0;--bg:#0f1115;--panel:#181b21;--line:#2a2f38;--tx:#eef1f5;--tx2:#9aa3b2}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif}
+.card{width:min(520px,94vw);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:28px}
+h1{font-size:22px;margin:0 0 6px}p{color:var(--tx2);margin:6px 0 16px}label{display:block;margin:14px 0 6px;font-size:14px;color:var(--tx2)}
+input[type=file],textarea{width:100%;background:#0f1115;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
+button{background:var(--pri);color:#04110d;border:0;border-radius:10px;padding:12px 18px;font:600 15px system-ui;cursor:pointer;width:100%;margin-top:16px}
+button:disabled{opacity:.5;cursor:default}.msg{margin-top:14px;font-size:14px;white-space:pre-line}.ok{color:var(--pri)}.err{color:#ff7a7a}
+.bar{height:8px;background:#0f1115;border-radius:6px;overflow:hidden;margin-top:12px;display:none}.bar i{display:block;height:100%;width:0;background:var(--pri)}
+</style></head><body>
+<div class="card">
+  <h1>Publicar versão</h1>
+  <p id="who">Entre com a conta de administrador.</p>
+  <button id="login">Entrar com Google</button>
+  <div id="panel" hidden>
+    <label>Pacote (AVANT-Hub.zip)</label><input type="file" id="file" accept=".zip">
+    <label>O que mudou (aparece para o pessoal)</label><textarea id="notes" rows="4" placeholder="Ex.: novas ferramentas no AVANTools, correções"></textarea>
+    <button id="send">Publicar</button>
+    <div class="bar" id="bar"><i></i></div>
+  </div>
+  <div class="msg" id="msg"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, Bytes } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const app = initializeApp({
+  apiKey: "AIzaSyCYe4xuoxPTxrATPui_2UJCKVIE92XYkDA", authDomain: "avant-hub-c7f41.firebaseapp.com", projectId: "avant-hub-c7f41",
+  storageBucket: "avant-hub-c7f41.firebasestorage.app", messagingSenderId: "851305378186", appId: "1:851305378186:web:6e9f3385f019ba446c9873"
+});
+const auth = getAuth(app), db = getFirestore(app), $ = s => document.querySelector(s);
+const say = (t, c) => { $("#msg").textContent = t; $("#msg").className = "msg " + (c || ""); };
+const CHUNK = 700000;
+onAuthStateChanged(auth, u => { $("#panel").hidden = !u; $("#login").hidden = !!u; if (u) $("#who").textContent = "Conectado como " + u.email; });
+$("#login").onclick = async () => { try { const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: "select_account" }); await signInWithPopup(auth, p); } catch (e) { say("Erro: " + (e.code || e.message), "err"); } };
+const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+$("#send").onclick = async () => {
+  const f = $("#file").files[0]; if (!f) return say("Escolha o arquivo .zip.", "err");
+  $("#send").disabled = true; $("#bar").style.display = "block"; const bar = $("#bar i");
+  try {
+    say("Lendo o pacote…");
+    const buf = await f.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const names = Object.keys(zip.files);
+    const mf = names.find(n => /(^|\/)manifest\.json$/.test(n) && n.split("/").length <= 2);
+    if (!mf) throw new Error("O zip não tem manifest.json.");
+    const man = JSON.parse(await zip.file(mf).async("string"));
+    if (man.name !== "AVANT Hub") throw new Error("Esse zip não parece ser do AVANT Hub.");
+    const sha = hex(await crypto.subtle.digest("SHA-256", buf));
+    const rid = Date.now().toString(36), n = Math.ceil(buf.byteLength / CHUNK);
+    let old = null; try { const s = await getDoc(doc(db, "releases", "latest")); if (s.exists()) old = s.data(); } catch {}
+    let done = 0;
+    const put = async i => {
+      const part = new Uint8Array(buf, i * CHUNK, Math.min(CHUNK, buf.byteLength - i * CHUNK));
+      await setDoc(doc(db, "parts", rid + "_" + i), { rid, i, data: Bytes.fromUint8Array(part) });
+      done++; bar.style.width = (done / n * 100) + "%"; say(`Enviando… ${done}/${n}`);
+    };
+    const queue = [...Array(n).keys()];
+    await Promise.all([0, 1, 2].map(async () => { while (queue.length) await put(queue.shift()); }));
+    await setDoc(doc(db, "releases", "latest"), { version: man.version, sha256: sha, notes: $("#notes").value.trim(), size: buf.byteLength, parts: n, rid, at: Date.now() });
+    if (old && old.rid && old.parts) { for (let i = 0; i < old.parts; i++) await deleteDoc(doc(db, "parts", old.rid + "_" + i)).catch(() => {}); }
+    say(`Publicado: versão ${man.version} (${(buf.byteLength / 1e6).toFixed(1)} MB, ${n} partes).\nO pessoal vê o aviso no hub em até 6 horas, ou na hora ao clicar em “Verificar agora”.`, "ok");
+  } catch (e) { say("Não deu certo: " + (e.code || e.message || e), "err"); }
+  $("#send").disabled = false;
+};
+</script></body></html>
