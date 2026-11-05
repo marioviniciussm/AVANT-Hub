@@ -18,6 +18,7 @@ button:disabled{opacity:.5;cursor:default}.msg{margin-top:14px;font-size:14px;wh
   <div id="panel" hidden>
     <label>Pacote (AVANT-Hub.zip)</label><input type="file" id="file" accept=".zip">
     <label>O que mudou (aparece para o pessoal)</label><textarea id="notes" rows="4" placeholder="Ex.: novas ferramentas no AVANTools, correções"></textarea>
+    <label style="display:flex;gap:8px;align-items:flex-start;color:var(--tx)"><input type="checkbox" id="full" checked style="margin-top:4px"><span>Incluir também o pacote completo (necessário enquanto alguém ainda estiver na 7.14 ou antes; depois pode desmarcar para publicar mais rápido)</span></label>
     <button id="send">Publicar</button>
     <div class="bar" id="bar"><i></i></div>
   </div>
@@ -51,19 +52,39 @@ $("#send").onclick = async () => {
     const man = JSON.parse(await zip.file(mf).async("string"));
     if (man.name !== "AVANT Hub") throw new Error("Esse zip não parece ser do AVANT Hub.");
     const sha = hex(await crypto.subtle.digest("SHA-256", buf));
-    const rid = Date.now().toString(36), n = Math.ceil(buf.byteLength / CHUNK);
+    const rid = Date.now().toString(36), full = $("#full").checked, n = full ? Math.ceil(buf.byteLength / CHUNK) : 0;
     let old = null; try { const s = await getDoc(doc(db, "releases", "latest")); if (s.exists()) old = s.data(); } catch {}
-    let done = 0;
-    const put = async i => {
+    let oldFiles = {}; try { if (old && old.manifest) oldFiles = JSON.parse(old.manifest); } catch {}
+    const root = mf.includes("/") ? mf.slice(0, mf.lastIndexOf("/") + 1) : "";
+    // 1) cada arquivo: sha256 do conteúdo, comprimido e cortado em partes. Só sobe o que ainda não existe.
+    say("Conferindo o que mudou…");
+    const files = {}, toSend = []; const zn = names.filter(x => !zip.files[x].dir);
+    for (const nm of zn) {
+      const u8 = await zip.file(nm).async("uint8array"), rel = nm.slice(root.length), fs = hex(await crypto.subtle.digest("SHA-256", u8));
+      const was = oldFiles[rel];
+      if (was && was[0] === fs) { files[rel] = was; continue; }
+      const z = new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+      const cnt = Math.max(1, Math.ceil(z.length / CHUNK)); files[rel] = [fs, cnt, u8.length]; toSend.push({ fs, z, cnt });
+    }
+    const jobs = []; for (const t of toSend) for (let i = 0; i < t.cnt; i++) jobs.push({ t, i });
+    let done = 0, total = jobs.length + n;
+    const tick = () => { done++; bar.style.width = (done / Math.max(1, total) * 100) + "%"; say(`Enviando… ${done}/${total}\n${toSend.length} arquivo(s) novo(s) ou alterado(s), ${Object.keys(files).length - toSend.length} iguais ao anterior.`); };
+    const run3 = async list => { await Promise.all([0, 1, 2].map(async () => { while (list.length) await list.shift()(); })); };
+    await run3(jobs.map(j => async () => {
+      const part = j.t.z.subarray(j.i * CHUNK, Math.min(j.t.z.length, (j.i + 1) * CHUNK));
+      await setDoc(doc(db, "parts", "f_" + j.t.fs.slice(0, 32) + "_" + j.i), { i: j.i, data: Bytes.fromUint8Array(part) }); tick();
+    }));
+    // 2) pacote completo (para quem ainda está numa versão antiga)
+    if (full) await run3([...Array(n).keys()].map(i => async () => {
       const part = new Uint8Array(buf, i * CHUNK, Math.min(CHUNK, buf.byteLength - i * CHUNK));
-      await setDoc(doc(db, "parts", rid + "_" + i), { rid, i, data: Bytes.fromUint8Array(part) });
-      done++; bar.style.width = (done / n * 100) + "%"; say(`Enviando… ${done}/${n}`);
-    };
-    const queue = [...Array(n).keys()];
-    await Promise.all([0, 1, 2].map(async () => { while (queue.length) await put(queue.shift()); }));
-    await setDoc(doc(db, "releases", "latest"), { version: man.version, sha256: sha, notes: $("#notes").value.trim(), size: buf.byteLength, parts: n, rid, at: Date.now() });
+      await setDoc(doc(db, "parts", rid + "_" + i), { rid, i, data: Bytes.fromUint8Array(part) }); tick();
+    }));
+    await setDoc(doc(db, "releases", "latest"), { version: man.version, sha256: full ? sha : "", notes: $("#notes").value.trim(), size: buf.byteLength, parts: n, rid: full ? rid : "", at: Date.now(), manifest: JSON.stringify(files) });
+    // 3) limpeza do que ficou sem uso
     if (old && old.rid && old.parts) { for (let i = 0; i < old.parts; i++) await deleteDoc(doc(db, "parts", old.rid + "_" + i)).catch(() => {}); }
-    say(`Publicado: versão ${man.version} (${(buf.byteLength / 1e6).toFixed(1)} MB, ${n} partes).\nO pessoal vê o aviso no hub em até 6 horas, ou na hora ao clicar em “Verificar agora”.`, "ok");
+    const live = new Set(Object.values(files).map(v => v[0]));
+    for (const v of Object.values(oldFiles)) if (!live.has(v[0])) { live.add(v[0]); for (let i = 0; i < v[1]; i++) await deleteDoc(doc(db, "parts", "f_" + v[0].slice(0, 32) + "_" + i)).catch(() => {}); }
+    say(`Publicado: versão ${man.version}. Subiram ${toSend.length} arquivo(s) de ${Object.keys(files).length}${full ? ", mais o pacote completo" : ""}.\nO pessoal vê o aviso no hub em até 6 horas, ou na hora ao clicar em “Verificar agora”.`, "ok");
   } catch (e) { say("Não deu certo: " + (e.code || e.message || e), "err"); }
   $("#send").disabled = false;
 };
