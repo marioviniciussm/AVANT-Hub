@@ -11,6 +11,7 @@ h1{font-size:22px;margin:0 0 6px}p{color:var(--tx2);margin:6px 0 16px}label{disp
 input[type=file],textarea{width:100%;background:#0f1115;color:var(--tx);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit}
 button{background:var(--pri);color:#04110d;border:0;border-radius:10px;padding:12px 18px;font:600 15px system-ui;cursor:pointer;width:100%;margin-top:16px}
 button:disabled{opacity:.5;cursor:default}.msg{margin-top:14px;font-size:14px;white-space:pre-line}.ok{color:var(--pri)}.err{color:#ff7a7a}
+.fbk{margin-top:22px;border-top:1px solid var(--line);padding-top:16px}.fbk h2{font-size:17px;margin:0 0 10px}.fbi{border:1px solid var(--line);padding:10px 12px;margin-bottom:8px;font-size:14px}.fbi b{color:var(--pri)}.fbi small{color:var(--tx2);display:block;margin-bottom:4px}.fbi p{margin:4px 0 8px;color:var(--tx);white-space:pre-wrap}.fbi button{width:auto;margin:0;padding:6px 12px;font-size:13px}
 .bar{height:8px;background:#0f1115;border-radius:6px;overflow:hidden;margin-top:12px;display:none}.bar i{display:block;height:100%;width:0;background:var(--pri)}
 </style></head><body>
 <div class="card">
@@ -23,6 +24,7 @@ button:disabled{opacity:.5;cursor:default}.msg{margin-top:14px;font-size:14px;wh
     <label style="display:flex;gap:8px;align-items:flex-start;color:var(--tx)"><input type="checkbox" id="full" checked style="margin-top:4px"><span>Incluir também o pacote completo (necessário enquanto alguém ainda estiver na 7.14 ou antes; depois pode desmarcar para publicar mais rápido)</span></label>
     <button id="send">Publicar</button>
     <div class="bar" id="bar"><i></i></div>
+    <div class="fbk"><h2>Relatos recebidos</h2><div id="fbList"><p>Carregando…</p></div></div>
   </div>
   <div class="msg" id="msg"></div>
 </div>
@@ -30,7 +32,7 @@ button:disabled{opacity:.5;cursor:default}.msg{margin-top:14px;font-size:14px;wh
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, deleteDoc, Bytes } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, Bytes, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app = initializeApp({
   apiKey: "AIzaSyCYe4xuoxPTxrATPui_2UJCKVIE92XYkDA", authDomain: "avant-hub-c7f41.firebaseapp.com", projectId: "avant-hub-c7f41",
   storageBucket: "avant-hub-c7f41.firebasestorage.app", messagingSenderId: "851305378186", appId: "1:851305378186:web:6e9f3385f019ba446c9873"
@@ -38,7 +40,17 @@ const app = initializeApp({
 const auth = getAuth(app), db = getFirestore(app), $ = s => document.querySelector(s);
 const say = (t, c) => { $("#msg").textContent = t; $("#msg").className = "msg " + (c || ""); };
 const CHUNK = 700000;
-onAuthStateChanged(auth, u => { $("#panel").hidden = !u; $("#login").hidden = !!u; if (u) $("#who").textContent = "Conectado como " + u.email; });
+const esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+async function loadFb() {
+  const box = $("#fbList");
+  try {
+    const q = await getDocs(query(collection(db, "feedback"), orderBy("em", "desc"), limit(100)));
+    if (q.empty) { box.innerHTML = "<p>Nenhum relato ainda.</p>"; return; }
+    box.innerHTML = q.docs.map(d => { const x = d.data(); return `<div class="fbi"><small><b>${esc(x.tipo)}</b> · ${esc(new Date(x.em).toLocaleString("pt-BR"))} · ${esc(x.email || "sem e-mail")} · v${esc(x.versao)} · ${esc(x.onde)}</small><p>${esc(x.texto)}</p><button data-del="${d.id}">Resolvido (apagar)</button></div>`; }).join("");
+    box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => { b.disabled = true; try { await deleteDoc(doc(db, "feedback", b.dataset.del)); b.closest(".fbi").remove(); } catch (e) { b.disabled = false; } });
+  } catch (e) { box.innerHTML = "<p>Não consegui ler os relatos: " + esc(e.code || e.message) + "</p>"; }
+}
+onAuthStateChanged(auth, u => { $("#panel").hidden = !u; $("#login").hidden = !!u; if (u) { $("#who").textContent = "Conectado como " + u.email; loadFb(); } });
 $("#login").onclick = async () => { try { const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: "select_account" }); await signInWithPopup(auth, p); } catch (e) { say("Erro: " + (e.code || e.message), "err"); } };
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
 $("#send").onclick = async () => {
