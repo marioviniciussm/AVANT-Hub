@@ -64,6 +64,12 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
 .card input[type=file],.card textarea{width:100%;background:var(--panel2);border:1px solid var(--line2);padding:10px 12px}
 .msg{margin-top:14px;white-space:pre-line;font-size:14px}.ok{color:var(--ok)}.err{color:var(--danger)}
 .bar{height:8px;background:var(--panel2);overflow:hidden;margin-top:12px;display:none}.bar i{display:block;height:100%;width:0;background:var(--sec)}
+.pr{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);border-left:4px solid var(--line2)}.pr:last-child{border-bottom:0}
+.pr.on{border-left-color:var(--ok)}.pr.hoje{border-left-color:var(--info)}
+.pr b{display:block;font-weight:700;color:var(--pri-dd)}.pr small{color:var(--tx3);font-size:13px}
+.pr .sp{flex:1;min-width:0}.dot{width:10px;height:10px;border-radius:50%;background:var(--line2);flex:none}.pr.on .dot{background:var(--ok)}.pr.hoje .dot{background:var(--info)}
+.ph{position:relative;width:34px;height:34px;background:var(--pri-l);color:var(--pri);font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.st-velha{background:var(--warn-bg);color:var(--warn)}.st-ok{background:var(--ok-bg);color:var(--ok)}
 .rel{padding:14px 16px;border-bottom:1px solid var(--line);border-left:4px solid var(--pri)}.rel:last-child{border-bottom:0}
 .rel b{font-size:16px;color:var(--pri-dd)}.rel ul{margin:6px 0 0;padding-left:18px;color:var(--tx2)}
 @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}.who span{display:none}.brand small{display:none}.tab{padding:0 12px}}
@@ -80,6 +86,7 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
     <div class="brand">Hub <small>Administração</small></div>
     <nav class="tabs">
       <button class="tab on" data-tab="fb">Relatos <span class="n" id="nNovos">0</span></button>
+      <button class="tab" data-tab="ppl">Pessoas</button>
       <button class="tab" data-tab="pub">Publicar versão</button>
       <button class="tab" data-tab="hist">Versões publicadas</button>
     </nav>
@@ -96,6 +103,13 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
       <button class="ghost" id="fcsv">Baixar planilha (CSV)</button>
     </div>
     <div class="list" id="fbList"><div class="empty">Carregando…</div></div>
+  </main>
+
+  <main class="wrap" id="p-ppl" hidden>
+    <h1>Pessoas</h1>
+    <p class="sub">Quem abriu o hub, em que versão e quando foi o último acesso. A pessoa aparece aqui depois de abrir o hub na versão 7.20.2 ou mais nova.</p>
+    <div class="stats" id="pStats"></div>
+    <div class="list" id="pList"><div class="empty">Carregando…</div></div>
   </main>
 
   <main class="wrap" id="p-pub" hidden>
@@ -137,8 +151,9 @@ const TIPO = { erro: "Erro", problema: "Problema", sugestao: "Sugestão" }, STAT
 // abas
 document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
-  for (const k of ["fb", "pub", "hist"]) $("#p-" + k).hidden = k !== b.dataset.tab;
+  for (const k of ["fb", "ppl", "pub", "hist"]) $("#p-" + k).hidden = k !== b.dataset.tab;
   if (b.dataset.tab === "hist") loadRel();
+  if (b.dataset.tab === "ppl") loadPpl();
 });
 
 // relatos
@@ -188,6 +203,25 @@ $("#fcsv").onclick = () => {
   const csv = "\ufeff" + [["Data", "Tipo", "Status", "E-mail", "Versão", "Tela", "Texto", "Anotação"].map(q).join(";")].concat(ALL.map(x => [when(x.em), TIPO[x.tipo] || x.tipo, STAT[stOf(x)], x.email, x.versao, x.onde, x.texto, x.nota].map(q).join(";"))).join("\n");
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = "relatos-avant-hub.csv"; a.click();
 };
+
+// pessoas (presença)
+const ago = t => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 3 ? "agora" : m < 60 ? m + " min atrás" : m < 1440 ? Math.round(m / 60) + " h atrás" : Math.round(m / 1440) + " d atrás"; };
+const verNum = v => String(v || "0").split(".").map(n => +n || 0);
+const newer = (a, b) => { const x = verNum(a), y = verNum(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+let pTimer = 0;
+async function loadPpl() {
+  
+  try {
+    const q = await getDocs(query(collection(db, "presenca"), orderBy("em", "desc"), limit(500)));
+    let latest = ""; try { const l = await getDoc(doc(db, "releases", "latest")); if (l.exists()) latest = l.data().version; } catch {}
+    const P = q.docs.map(d => d.data()), now = Date.now();
+    const hoje = P.filter(p => now - p.em < 864e5), sem = P.filter(p => now - p.em < 6048e5);
+    const velha = latest ? P.filter(p => newer(latest, p.versao)).length : 0;
+    $("#pStats").innerHTML = [[P.length, "Pessoas registradas"], [hoje.length, "Acessaram hoje"], [sem.length, "Acessaram em 7 dias"], [velha, "Em versão antiga"]].map(([n, l]) => `<div class="stat" style="cursor:default"><b>${n}</b><span>${l}</span></div>`).join("");
+    $("#pList").innerHTML = P.map(p => { const on_ = false, h = now - p.em < 864e5, old = latest && newer(latest, p.versao);
+      return `<div class="pr ${on_ ? "on" : h ? "hoje" : ""}"><span class="dot"></span><span class="ph">${esc((p.nome || p.email)[0].toUpperCase())}${p.foto ? `<img src="${esc(p.foto)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}</span><div class="sp"><b>${esc(p.nome || p.email)}</b><small>${esc(p.email)}</small></div><span class="tag ${old ? "st-velha" : "st-ok"}">v${esc(p.versao)}${old ? " · atualizar" : ""}</span><span class="it-d" style="min-width:90px;text-align:right">${on_ ? "<b style=color:var(--ok)>online</b>" : esc(ago(p.em))}</span></div>`; }).join("") || `<div class="empty">Ninguém registrado ainda. Aparece quando alguém abrir o hub na 7.20.2.</div>`;
+  } catch (e) { $("#pList").innerHTML = `<div class="empty">Não consegui ler: ${esc(e.code || e.message)}</div>`; }
+}
 
 // histórico de versões
 async function loadRel() {
