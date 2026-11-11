@@ -100,6 +100,7 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
     <p class="sub">Erros, problemas e sugestões enviados pelo botão Reportar. Nada é apagado ao resolver: o histórico fica aqui.</p>
     <div class="stats" id="stats"></div>
     <div class="tools">
+      <button class="ghost" id="fRef">Atualizar agora</button>
       <input id="fq" type="search" placeholder="Buscar por texto, e-mail ou tela" aria-label="Buscar">
       <select id="ft" aria-label="Tipo"><option value="">Todos os tipos</option><option value="erro">Erros</option><option value="problema">Problemas</option><option value="sugestao">Sugestões</option></select>
       <button class="ghost" id="fcsv">Baixar planilha (CSV)</button>
@@ -110,6 +111,7 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
   <main class="wrap" id="p-ppl" hidden>
     <h1>Pessoas</h1>
     <p class="sub">Quem abriu o hub, em que versão e quando foi o último acesso. A pessoa aparece aqui depois de abrir o hub na versão 7.20.2 ou mais nova.</p>
+    <div class="tools"><button class="ghost" id="pRef">Atualizar agora</button><span class="it-d" id="pAt" style="align-self:center"></span></div>
     <div class="stats" id="pStats"></div>
     <div class="list" id="pList"><div class="empty">Carregando…</div></div>
   </main>
@@ -179,7 +181,7 @@ const stOf = x => x.status || "novo";
 async function loadFb() {
   try {
     const q = await getDocs(query(collection(db, "feedback"), orderBy("em", "desc"), limit(500)));
-    ALL = q.docs.map(d => ({ id: d.id, ...d.data() }));
+    ALL = q.docs.map(d => ({ id: d.id, ...d.data() })); $("#fRef").textContent = "Atualizar (" + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + ")";
     drawFb();
   } catch (e) { $("#fbList").innerHTML = `<div class="empty">Não consegui ler os relatos: ${esc(fbErr(e))}</div>`; }
 }
@@ -214,6 +216,8 @@ function drawFb() {
     };
   });
 }
+$("#fRef").onclick = async () => { $("#fRef").textContent = "Atualizando…"; await loadFb(); };
+$("#pRef").onclick = async () => { $("#pRef").disabled = true; $("#pAt").textContent = "Atualizando…"; await loadPpl(); $("#pRef").disabled = false; };
 $("#fq").oninput = drawFb; $("#ft").onchange = drawFb;
 $("#fcsv").onclick = () => {
   const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
@@ -231,7 +235,7 @@ async function loadPpl() {
   try {
     const q = await getDocs(query(collection(db, "presenca"), orderBy("em", "desc"), limit(500)));
     let latest = ""; try { const l = await getDoc(doc(db, "releases", "latest")); if (l.exists()) latest = l.data().version; } catch {}
-    const P = q.docs.map(d => d.data()), now = Date.now();
+    const P = q.docs.map(d => d.data()), now = Date.now(); $("#pAt").textContent = "Atualizado às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     const hoje = P.filter(p => now - p.em < 864e5), sem = P.filter(p => now - p.em < 6048e5);
     const velha = latest ? P.filter(p => newer(latest, p.versao)).length : 0;
     $("#pStats").innerHTML = [[P.length, "Pessoas registradas"], [hoje.length, "Acessaram hoje"], [sem.length, "Acessaram em 7 dias"], [velha, "Em versão antiga"]].map(([n, l]) => `<div class="stat" style="cursor:default"><b>${n}</b><span>${l}</span></div>`).join("");
