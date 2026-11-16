@@ -149,6 +149,12 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
       <label>Mostrar até <span class="hint" style="display:inline">(opcional — depois dessa data o pop-up para de aparecer)</span></label>
       <input id="avUntil" type="date" style="height:36px;background:var(--panel2);border:1px solid var(--line2);padding:0 12px">
       </div>
+      <label>Como aparece para a pessoa</label>
+      <div class="row av-kind" id="avModo">
+        <button class="ghost on" type="button" data-m="popup">Janela no meio da tela</button>
+        <button class="ghost" type="button" data-m="canto">Notificação no canto da tela</button>
+      </div>
+      <div class="hint" id="avModoH">A janela cobre a tela até a pessoa clicar em Entendi. Boa para avisos importantes.</div>
       <label>Título</label>
       <input id="avTit" maxlength="80" placeholder="Ex.: Reunião de pauta amanhã" style="width:100%;height:36px;background:var(--panel2);border:1px solid var(--line2);padding:0 12px">
       <label>Mensagem</label>
@@ -330,7 +336,8 @@ async function loadPpl() {
 
 
 // avisos para colegas
-let AVP = [], AVL = [], PGL = [], avBusy = false, avKind = "ind", AVIMG = [];
+let AVP = [], AVL = [], PGL = [], avBusy = false, avKind = "ind", AVIMG = [], avModo = "popup";
+const AV_MIN = "7.21.19", AV_CANTO = "7.21.20";
 const avMail = m => String(m || "").trim().toLowerCase();
 const avSel = () => [...document.querySelectorAll("#avPeople input:checked")].map(i => i.value);
 const avCount = () => { const n = avSel().length; $("#avCount").textContent = n ? n + (n === 1 ? " pessoa marcada" : " pessoas marcadas") : ""; };
@@ -339,7 +346,7 @@ async function loadAv() {
     const q = await getDocs(query(collection(db, "presenca"), orderBy("em", "desc"), limit(500)));
     AVP = q.docs.map(d => d.data()).filter(p => p.email);
     const keep = new Set(avSel());
-    $("#avPeople").innerHTML = AVP.map(p => `<label class="av-p"><input type="checkbox" value="${esc(avMail(p.email))}"${keep.has(avMail(p.email)) ? " checked" : ""}><b>${esc(p.nome || p.email)}</b><small>${esc(p.email)}</small></label>`).join("") || `<div class="empty">Ninguém registrado ainda. Use o campo de e-mail abaixo.</div>`;
+    $("#avPeople").innerHTML = AVP.map(p => `<label class="av-p"><input type="checkbox" value="${esc(avMail(p.email))}"${keep.has(avMail(p.email)) ? " checked" : ""}><b>${esc(p.nome || p.email)}</b><small>${esc(p.email)}</small>${newer(AV_MIN, p.versao) ? `<span class="tag st-novo" style="margin-left:auto" title="Essa pessoa ainda não está na versão que recebe avisos">versão ${esc(p.versao || "?")}: não recebe</span>` : `<small style="margin-left:auto">v${esc(p.versao || "?")}${p.em ? " · visto " + ago(p.em) : ""}</small>`}</label>`).join("") || `<div class="empty">Ninguém registrado ainda. Use o campo de e-mail abaixo.</div>`;
     document.querySelectorAll("#avPeople input").forEach(i => i.onchange = avCount); avCount();
   } catch (e) { $("#avPeople").innerHTML = `<div class="empty">Não consegui ler: ${esc(fbErr(e))}</div>`; }
   loadAvList();
@@ -368,7 +375,7 @@ function drawPg() {
     <div class="row"><button class="ghost" data-pg="tog" data-id="${esc(x.id)}" type="button">${x.ativo ? "Desativar" : "Ativar"}</button>
     <button class="ghost" data-pg="again" data-id="${esc(x.id)}" type="button">Mostrar de novo para todos</button>
     <button class="ghost" data-pg="who" data-id="${esc(x.id)}" type="button">Ver quem viu</button>
-    <button class="ghost del" data-pg="del" data-id="${esc(x.id)}" type="button">Apagar</button></div>
+    <button class="ghost del" data-pg="del" data-id="${esc(x.id)}" type="button">Cancelar e apagar</button><span class="it-d">${x.modo === "canto" ? "Notificação no canto" : "Janela"}</span></div>
     <div class="hint" id="pgw-${esc(x.id)}"></div></div></div>`; }).join("") || `<div class="empty">Nenhum pop-up publicado.</div>`;
   document.querySelectorAll("#pgList [data-pg]").forEach(b => b.onclick = async () => {
     const id = b.dataset.id, x = PGL.find(r => r.id === id), k = b.dataset.pg;
@@ -379,22 +386,31 @@ function drawPg() {
         const q = await getDocs(collection(db, "popups", id, "vistos")), cur = q.docs.map(d => d.data()).filter(d => (d.v || 1) === (x.v || 1));
         $("#pgw-" + id).innerHTML = `<b>${cur.length}</b> ${cur.length === 1 ? "pessoa viu" : "pessoas viram"} esta versão` + (cur.length ? ": " + cur.map(d => esc(nomeDe(d.email))).join(", ") : ".");
       } else if (k === "del") {
-        if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Apagar mesmo?"; setTimeout(() => { b.classList.remove("armed"); b.textContent = "Apagar"; }, 2500); return; }
+        if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Confirmar?"; setTimeout(() => { b.classList.remove("armed"); b.textContent = "Cancelar e apagar"; }, 2500); return; }
         await deleteDoc(doc(db, "popups", id)); PGL = PGL.filter(r => r.id !== id); drawPg();
       }
     } catch (e) { b.textContent = "Erro: " + (fbErr(e) || "falhou"); }
   });
 }
 const nomeDe = m => { const p = AVP.find(x => avMail(x.email) === avMail(m)); return p && p.nome ? p.nome : m; };
+const loteKey = x => x.lote || x.em + "|" + x.titulo;
+const sib = x => AVL.filter(r => !r.lida && loteKey(r) === loteKey(x)).length;
 function drawAv() {
   const f = $("#avSt").value, rows = AVL.filter(x => !f || (f === "sim") === !!x.lida);
   $("#avList").innerHTML = rows.map(x => `<div class="it av-i ${x.lida ? "s-resolvido" : "s-novo"}" data-id="${esc(x.id)}">
     <div class="it-h" style="cursor:default"><span class="tag ${x.lida ? "st-resolvido" : "st-novo"}">${x.lida ? "Lida" : "Não lida"}</span>
     <span class="it-t">${esc(x.titulo)} <span class="it-d">· para ${esc(nomeDe(x.para))}</span></span><span class="it-d">${esc(x.lida ? "lida " + when(x.lidaEm) : "enviada " + when(x.em))}</span></div>
-    <div class="it-b">${md(x.texto)}${pics(x.imagens)}<button class="ghost del" data-del="${esc(x.id)}" type="button">Apagar</button></div></div>`).join("") || `<div class="empty">Nenhum aviso aqui.</div>`;
+    <div class="it-b">${md(x.texto)}${pics(x.imagens)}<div class="row"><button class="ghost del" data-del="${esc(x.id)}" type="button">${x.lida ? "Apagar do histórico" : "Cancelar envio"}</button>${!x.lida && sib(x) > 1 ? `<button class="ghost del" data-lote="${esc(loteKey(x))}" type="button">Cancelar para todos que ainda não leram (${sib(x)})</button>` : ""}<span class="it-d">${x.modo === "canto" ? "Notificação no canto" : "Janela"}</span></div></div></div>`).join("") || `<div class="empty">Nenhum aviso aqui.</div>`;
   document.querySelectorAll("#avList [data-del]").forEach(b => b.onclick = async () => {
-    if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Apagar mesmo?"; setTimeout(() => { b.classList.remove("armed"); b.textContent = "Apagar"; }, 2500); return; }
+    const old = b.textContent;
+    if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Confirmar?"; setTimeout(() => { b.classList.remove("armed"); b.textContent = old; }, 2500); return; }
     try { await deleteDoc(doc(db, "avisos", b.dataset.del)); AVL = AVL.filter(r => r.id !== b.dataset.del); drawAv(); } catch (e) { b.textContent = "Erro: " + (fbErr(e) || "falhou"); }
+  });
+  document.querySelectorAll("#avList [data-lote]").forEach(b => b.onclick = async () => {
+    const old = b.textContent;
+    if (!b.classList.contains("armed")) { b.classList.add("armed"); b.textContent = "Confirmar?"; setTimeout(() => { b.classList.remove("armed"); b.textContent = old; }, 2500); return; }
+    const ids = AVL.filter(r => !r.lida && loteKey(r) === b.dataset.lote).map(r => r.id);
+    try { await Promise.all(ids.map(id => deleteDoc(doc(db, "avisos", id)))); AVL = AVL.filter(r => !ids.includes(r.id)); drawAv(); } catch (e) { b.textContent = "Erro: " + (fbErr(e) || "falhou"); }
   });
 }
 
@@ -434,6 +450,11 @@ $("#p-av .card").addEventListener("dragover", e => e.preventDefault());
 $("#p-av .card").addEventListener("drop", e => { if (e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); addImgs(e.dataTransfer.files); } });
 const pics = a => (a || []).map(d => `<img class="av-pic" src="${esc(d)}" alt="">`).join("");
 function prevAv() { const t = $("#avTxt").value.trim(); $("#avPrev").innerHTML = (t ? md(t) : "") + pics(AVIMG) || `<span class="hint">A prévia aparece aqui.</span>`; }
+document.querySelectorAll("#avModo button").forEach(b => b.onclick = () => {
+  avModo = b.dataset.m;
+  document.querySelectorAll("#avModo button").forEach(x => x.classList.toggle("on", x === b));
+  $("#avModoH").textContent = avModo === "canto" ? "Um cartão discreto no canto da tela. A pessoa abre quando quiser ou dispensa. Boa para recados leves. Só funciona na versão 7.21.20 ou mais nova (antes disso aparece como janela)." : "A janela cobre a tela até a pessoa clicar em Entendi. Boa para avisos importantes.";
+});
 document.querySelectorAll("#avKind button").forEach(b => b.onclick = () => {
   avKind = b.dataset.k;
   document.querySelectorAll("#avKind button").forEach(x => x.classList.toggle("on", x === b));
@@ -462,10 +483,11 @@ $("#avSend").onclick = async () => {
   try {
     if (avKind === "all") {
       const u = $("#avUntil").value, ate = u ? new Date(u + "T23:59:59").getTime() : 0;
-      await setDoc(doc(collection(db, "popups")), { titulo: tit, texto: txt, imagens: AVIMG.slice(), de: me, em, v: 1, ativo: true, ate });
+      await setDoc(doc(collection(db, "popups")), { titulo: tit, texto: txt, imagens: AVIMG.slice(), de: me, em, v: 1, ativo: true, ate, modo: avModo });
       avSay("Pop-up publicado. Cada pessoa vê uma vez, ao abrir o hub.", "ok");
     } else {
-      await Promise.all([...to].map(m => setDoc(doc(collection(db, "avisos")), { para: m, titulo: tit, texto: txt, imagens: AVIMG.slice(), de: me, em, lida: false, lidaEm: 0 })));
+      const lote = em.toString(36) + Math.random().toString(36).slice(2, 6);
+      await Promise.all([...to].map(m => setDoc(doc(collection(db, "avisos")), { para: m, titulo: tit, texto: txt, imagens: AVIMG.slice(), de: me, em, lida: false, lidaEm: 0, modo: avModo, lote })));
       avSay(`Enviado para ${to.size} ${to.size === 1 ? "pessoa" : "pessoas"}. Ela vê o aviso quando abrir o hub.`, "ok");
     }
     $("#avTit").value = ""; $("#avTxt").value = ""; $("#avMail").value = ""; $("#avUntil").value = ""; AVIMG = []; drawImgs();
