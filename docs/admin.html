@@ -85,6 +85,23 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
 
 .md{font-size:14px;line-height:1.5;color:var(--tx)}.md p{margin:14px 0 4px}.md>p:first-child{margin-top:0}.md ul{margin:4px 0 0 20px;padding:0;color:var(--tx)}.md li{margin:3px 0}.md ul ul{list-style:circle}.md h4{margin:16px 0 6px;font-size:14px}.md hr{border:0;border-top:1px solid var(--line);margin:14px 0}.md code{font-family:ui-monospace,Consolas,monospace;background:var(--panel2);padding:1px 4px}
 .prev{margin-top:8px;border:1px dashed var(--line2);background:var(--panel);padding:14px 16px;max-height:340px;overflow:auto}.prev:empty{display:none}.hint{font-size:12px;color:var(--tx3);margin-top:4px}
+
+.u-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-top:16px}
+.u-h{font-size:15px;margin:0 0 12px;color:var(--pri-dd)}
+.ub{display:grid;grid-template-columns:minmax(120px,220px) 1fr 56px;gap:10px;align-items:center;padding:4px 0;font-size:14px}
+.ub .un{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ub .ubar{height:14px;background:var(--panel2)}.ub .ubar i{display:block;height:100%;background:var(--pri)}
+.ub .uv{text-align:right;font-variant-numeric:tabular-nums;color:var(--tx2)}
+.u-days{display:flex;align-items:flex-end;gap:2px;height:140px;border-bottom:1px solid var(--line)}
+.u-days i{flex:1;min-width:2px;background:var(--pri);opacity:.85}.u-days i:hover{background:var(--sec);opacity:1}
+.u-chips{display:flex;flex-wrap:wrap;gap:6px}.u-chips span{background:var(--panel2);border:1px solid var(--line);padding:4px 10px;font-size:13px;color:var(--tx2)}
+.up{border-bottom:1px solid var(--line)}.up:last-child{border-bottom:0}
+.up>summary{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;list-style:none}.up>summary::-webkit-details-marker{display:none}
+.up>summary:hover{background:var(--panel2)}
+.up .sp{flex:1;min-width:0}.up .sp b{display:block;color:var(--pri-dd)}.up .sp small{color:var(--tx3);font-size:13px}
+.up .num{min-width:70px;text-align:right;font-variant-numeric:tabular-nums}.up .num b{display:block;font-size:16px;color:var(--pri-dd)}.up .num small{color:var(--tx3);font-size:12px}
+.up-b{padding:4px 16px 16px 62px;background:var(--panel2)}
+.u-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}.u-row:last-child{border-bottom:0}
 </style></head><body>
 <div id="gate" class="login">
   <h1>AVANT Hub</h1>
@@ -100,6 +117,7 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
     <nav class="tabs">
       <button class="tab on" data-tab="fb">Relatos <span class="n" id="nNovos" hidden>0</span></button>
       <button class="tab" data-tab="ppl">Pessoas</button>
+      <button class="tab" data-tab="uso">Uso</button>
       <button class="tab" data-tab="av">Avisos</button>
       <button class="tab" data-tab="pub">Publicar versão</button>
       <button class="tab" data-tab="hist">Versões publicadas</button>
@@ -126,6 +144,32 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
     <div class="tools"><button class="ghost" id="pRef">Atualizar agora</button><span class="it-d" id="pAt" style="align-self:center"></span></div>
     <div class="stats" id="pStats"></div>
     <div class="list" id="pList"><div class="empty">Carregando…</div></div>
+  </main>
+
+  <main class="wrap" id="p-uso" hidden>
+    <h1>Uso</h1>
+    <p class="sub">Quais ferramentas e recursos cada pessoa usa. O hub conta só o <b>nome</b> da ferramenta e quantas vezes foi aberta, nunca o conteúdo. Só atualiza quando você clica em Atualizar agora (cada atualização lê uns 100 registros do Firebase). Cada pessoa envia o resumo a cada 2 minutos, quando faz algo novo. Aparece para quem está na versão <b>7.21.27</b> ou mais nova.</p>
+    <div class="tools">
+      <button class="ghost" id="uRef">Atualizar agora</button>
+      <select id="uRange" aria-label="Período"><option value="1" selected>Hoje</option><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option></select>
+      <select id="uSort" aria-label="Ordenar pessoas"><option value="uso">Pessoas: mais usos</option><option value="dias">Pessoas: mais dias ativos</option><option value="ultimo">Pessoas: acesso mais recente</option></select>
+      <button class="ghost" id="uCsv">Baixar planilha (CSV)</button>
+      <span class="it-d" id="uAt" style="align-self:center"></span>
+    </div>
+    <section class="card" style="margin-bottom:16px"><h2 class="u-h">Ao vivo <span style="font-weight:400;font-size:12px;color:var(--tx3)">(até o último clique em Atualizar)</span></h2><div id="uNow"></div></section>
+    <div class="stats" id="uStats"></div>
+    <div class="u-grid">
+      <section class="card" id="uDaysCard"><h2 class="u-h">Uso por dia</h2><div id="uDays" class="u-days"></div></section>
+      <section class="card"><h2 class="u-h">Recursos do hub</h2><div id="uFeats"></div></section>
+    </div>
+    <section class="card" style="margin-top:16px"><h2 class="u-h">Ferramentas mais usadas</h2><div id="uTools"></div></section>
+    <h2 class="u-h" style="margin:24px 0 8px">Pessoas</h2>
+    <div class="list" id="uPpl"><div class="empty">Carregando…</div></div>
+    <div class="u-grid" style="margin-top:16px">
+      <section class="card"><h2 class="u-h">Versões em uso</h2><div id="uVers"></div></section>
+      <section class="card"><h2 class="u-h">Sem acesso há 14 dias ou mais</h2><div id="uIdle"></div></section>
+    </div>
+    <section class="card" style="margin-top:16px"><h2 class="u-h">Ferramentas que ninguém abriu no período</h2><p class="hint" style="margin:0 0 8px">Boas candidatas a melhorar, divulgar ou tirar do menu.</p><div id="uNone" class="u-chips"></div></section>
   </main>
 
   <main class="wrap" id="p-av" hidden>
@@ -202,7 +246,7 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, deleteDoc, updateDoc, Bytes, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, updateDoc, Bytes, collection, getDocs, query, orderBy, limit, documentId } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app = initializeApp({
   apiKey: "AIzaSyCYe4xuoxPTxrATPui_2UJCKVIE92XYkDA", authDomain: "avant-hub-c7f41.firebaseapp.com", projectId: "avant-hub-c7f41",
   storageBucket: "avant-hub-c7f41.firebasestorage.app", messagingSenderId: "851305378186", appId: "1:851305378186:web:6e9f3385f019ba446c9873"
@@ -259,10 +303,11 @@ const TIPO = { erro: "Erro", problema: "Problema", sugestao: "Sugestão" }, STAT
 // abas
 document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
-  for (const k of ["fb", "ppl", "av", "pub", "hist"]) $("#p-" + k).hidden = k !== b.dataset.tab;
+  for (const k of ["fb", "ppl", "uso", "av", "pub", "hist"]) $("#p-" + k).hidden = k !== b.dataset.tab;
   if (b.dataset.tab === "av") loadAv();
   if (b.dataset.tab === "hist") loadRel();
   if (b.dataset.tab === "ppl") loadPpl();
+  if (b.dataset.tab === "uso" && !uLoaded) { uLoaded = true; loadUso(); }
 });
 
 // relatos
@@ -334,6 +379,81 @@ async function loadPpl() {
   } catch (e) { $("#pList").innerHTML = `<div class="empty">Não consegui ler: ${esc(fbErr(e))}</div>`; }
 }
 
+
+// uso: ferramentas e recursos mais usados, por pessoa
+const TOOL_IDS = ["algebra-calc", "artwork-enhancer", "audio-atlas", "audio-extractor", "audio-normaliser", "audio-trimmer", "auto-subtitle", "background-remover", "base-converter", "base64-image-encoder", "braille-converter", "brand-kit", "code-genny", "colorblind-sim", "colour-atlas", "colour-converter", "consulta-cnpj", "contador-redes", "contrast-checker", "conversor", "cron-builder", "decoder", "doc-converter", "encoder", "favicon-genny", "font-explorer", "frame-extractor", "glyph-browser", "gradient-genny", "graph-calc", "harmony-genny", "http-status", "image-atlas", "image-clipper", "image-compressor", "image-converter", "image-deskewer", "image-masker", "image-splitter", "image-stitcher", "image-to-pdf", "image-tracer", "imposer", "ipa-transcriber", "json-formatter", "jwt-decoder", "large-type", "line-height-calc", "lote-imagens", "markdown-writer", "matte-genny", "meta-tag-genny", "metadata-stripper", "minhas-gravacoes", "morse-code", "nato-phonetic", "palette-collection", "palette-extractor", "palette-genny", "paper-sizes", "password-genny", "paste-image", "pdf-compressor", "pdf-organiser", "pdf-page-numberer", "pdf-preflight", "pdf-rotate-crop", "pixel-picker", "placeholder-genny", "previa-perfil", "previa-post", "px-to-rem", "qr-genny", "recipe-table", "regex-tester", "request-builder", "salvos", "sci-calc", "screen-recorder", "scroll-genny", "shavian-transliterator", "social-cropper", "stupid-units", "subtitle-converter", "subtitle-studio", "svg-optimiser", "tailwind-cheatsheet", "tailwind-shades", "text-diff", "text-editor", "texto-ferramentas", "time-calc", "timecode-calc", "typo-calc", "unit-converter", "utm-genny", "uuid-genny", "video-atlas", "video-muter", "video-to-gif", "video-trimmer", "voice-recorder", "watermarker", "waveform-genny", "word-counter", "zine-imposer"];
+const FEAT = { inicio: "Início", "banco-de-midia": "Banco de mídia", "analise-de-mercado": "Análise de mercado", avantools: "AVANTools", "kit-da-marca": "Kit da marca", colecoes: "Coleções", busca: "Buscas feitas", download: "Downloads", "contas-das-plataformas": "Contas das plataformas", sessao: "Aberturas do hub" };
+const TOOL_NAMES = {"algebra-calc": "Calculadora de álgebra", "artwork-enhancer": "Textura para arte", "audio-atlas": "Atlas de áudio", "audio-extractor": "Extrator de áudio", "audio-normaliser": "Normalizador de áudio", "audio-trimmer": "Cortador de áudio", "auto-subtitle": "Transcrever áudio e vídeo", "background-remover": "Removedor de fundo", "base-converter": "Conversor de bases", "base64-image-encoder": "Imagem para Base64", "braille-converter": "Conversor de Braille", "brand-kit": "Kit da marca AVANT", "code-genny": "Gerador de código de barras", "colorblind-sim": "Simulador de daltonismo", "colour-atlas": "Atlas de cor", "colour-converter": "Conversor de cor", "consulta-cnpj": "Consulta de CNPJ", "contador-redes": "Contador por rede", "contrast-checker": "Verificador de contraste", "conversor": "Conversor e compressor", "cron-builder": "Montador de Cron", "decoder": "Decodificador de cifras", "doc-converter": "Conversor de documentos", "encoder": "Codificação e hash", "favicon-genny": "Gerador de favicon", "font-explorer": "Explorador de fontes", "frame-extractor": "Extrator de quadros", "glyph-browser": "Navegador de glifos", "gradient-genny": "Gerador de degradê", "graph-calc": "Calculadora gráfica", "harmony-genny": "Gerador de harmonias", "http-status": "Códigos HTTP", "image-atlas": "Atlas de imagem", "image-clipper": "Aparar imagem", "image-compressor": "Compressor de imagem", "image-converter": "Conversor de imagem", "image-deskewer": "Endireitar imagem", "image-masker": "Máscara de imagem", "image-splitter": "Divisor de imagem", "image-stitcher": "Unir imagens", "image-to-pdf": "Imagens para PDF", "image-tracer": "Vetorizar imagem", "imposer": "Imposição de impressão", "ipa-transcriber": "Transcrição IPA", "json-formatter": "Formatador de JSON", "jwt-decoder": "Decodificador JWT", "large-type": "Texto grande", "line-height-calc": "Calculadora de entrelinha", "lote-imagens": "Lote de imagens", "markdown-writer": "Bloco de notas", "matte-genny": "Gerador de fundo quadrado", "meta-tag-genny": "Gerador de meta tags", "metadata-stripper": "Remover metadados", "minhas-gravacoes": "Minhas gravações", "morse-code": "Código Morse", "nato-phonetic": "Alfabeto fonético", "palette-collection": "Coleção de paletas", "palette-extractor": "Extrator de paleta", "palette-genny": "Gerador de paletas", "paper-sizes": "Tamanhos de papel", "password-genny": "Gerador de senhas", "paste-image": "Colar imagem", "pdf-compressor": "Compressor de PDF", "pdf-organiser": "Organizador de PDF", "pdf-page-numberer": "Numeração de páginas PDF", "pdf-preflight": "Verificação de PDF", "pdf-rotate-crop": "Girar e cortar PDF", "pixel-picker": "Conta-gotas de pixel", "placeholder-genny": "Gerador de imagem placeholder", "previa-perfil": "Prévia do perfil", "previa-post": "Prévia do post", "px-to-rem": "PX to REM", "qr-genny": "Gerador de QR Code", "recipe-table": "Tabela de receita", "regex-tester": "Testador de Regex", "request-builder": "Montador de requisições", "salvos": "Guardados", "sci-calc": "Calculadora científica", "screen-recorder": "Gravador de tela", "scroll-genny": "Gerador de carrossel contínuo", "shavian-transliterator": "Transliterador Shaviano", "social-cropper": "Cortes para redes sociais", "stupid-units": "Unidades malucas", "subtitle-converter": "Conversor de legendas", "subtitle-studio": "Estúdio de legendas", "svg-optimiser": "Otimizador de SVG", "tailwind-cheatsheet": "Guia rápido Tailwind", "tailwind-shades": "Gerador de tons Tailwind", "text-diff": "Comparar textos", "text-editor": "Editor de texto", "texto-ferramentas": "Ferramentas de texto", "time-calc": "Calculadora de tempo", "timecode-calc": "Calculadora de timecode", "typo-calc": "Calculadora tipográfica", "unit-converter": "Conversor de unidades", "utm-genny": "Gerador de UTM", "uuid-genny": "Gerador de UUID", "video-atlas": "Atlas de vídeo", "video-muter": "Silenciar vídeo", "video-to-gif": "Vídeo para GIF", "video-trimmer": "Cortador de vídeo", "voice-recorder": "Gravador de voz", "watermarker": "Marca d'água", "waveform-genny": "Gerador de forma de onda", "word-counter": "Contador de palavras", "zine-imposer": "Imposição de zine"};
+const tName = id => TOOL_NAMES[id] || (String(id).replace(/-/g, " ").replace(/^./, c => c.toUpperCase()));
+const fName = id => FEAT[id] || tName(id);
+let U_DAYS = [], U_PPL = [];
+const sumMap = (rows, key) => { const o = {}; for (const r of rows) for (const [k, v] of Object.entries(r[key] || {})) o[k] = (o[k] || 0) + (+v || 0); return o; };
+const topN = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n);
+const barList = (rows, name) => { const mx = Math.max(1, ...rows.map(r => r[1])); return rows.map(([k, v]) => `<div class="ub"><span class="un" title="${esc(name(k))}">${esc(name(k))}</span><span class="ubar"><i style="width:${Math.max(2, Math.round(v / mx * 100))}%"></i></span><span class="uv">${v}</span></div>`).join("") || `<div class="empty" style="padding:12px">Ainda sem dados.</div>`; };
+const dayStr = t => new Date(t).toLocaleDateString("sv-SE");
+async function loadUso() {
+  $("#uRef").disabled = true; $("#uAt").textContent = "Atualizando…";
+  try {
+    const [d, p] = await Promise.all([
+      getDocs(query(collection(db, "usoDia"), orderBy(documentId(), "desc"), limit(90))),
+      getDocs(query(collection(db, "uso"), orderBy("em", "desc"), limit(500))),
+    ]);
+    U_DAYS = d.docs.map(x => ({ id: x.id, ...x.data() }));
+    U_PPL = p.docs.map(x => ({ id: x.id, ...x.data() }));
+    $("#uAt").textContent = "Atualizado às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    drawUso();
+  } catch (e) { $("#uAt").textContent = ""; $("#uStats").innerHTML = ""; $("#uPpl").innerHTML = `<div class="empty">Não consegui ler: ${esc(fbErr(e))}<br>Confira se as regras novas (uso e usoDia) foram publicadas no Firestore.</div>`; }
+  $("#uRef").disabled = false;
+}
+let uLoaded = false;
+function drawUso() {
+  const abertos = new Set([...document.querySelectorAll("#uPpl details[open]")].map(d => d.dataset.id));
+  const range = +$("#uRange").value || 30, now = Date.now(), cut = dayStr(now - (range - 1) * 864e5);
+  const days = U_DAYS.filter(x => x.id >= cut);
+  const tools = sumMap(days, "t"), feats = sumMap(days, "f");
+  const ativos = new Set(); days.forEach(x => Object.keys(x.pessoas || {}).forEach(m => ativos.add(m)));
+  const usos = Object.values(tools).reduce((a, b) => a + b, 0), tt = topN(tools, 1)[0];
+  $("#uStats").innerHTML = [[ativos.size, "Pessoas ativas"], [usos, "Telas de ferramentas abertas"], [tt ? tName(tt[0]) : "-", "Ferramenta mais usada"], [Object.keys(tools).length, "Ferramentas diferentes usadas"]]
+    .map(([n, l]) => `<div class="stat" style="cursor:default"><b${String(n).length > 8 ? ' style="font-size:20px"' : ""}>${esc(n)}</b><span>${l}</span></div>`).join("");
+  // por dia (do mais antigo ao mais novo)
+  const byDay = {}; days.forEach(x => { byDay[x.id] = Object.values(x.pessoas || {}).reduce((a, b) => a + (+b || 0), 0); });
+  const seq = []; for (let i = range - 1; i >= 0; i--) { const k = dayStr(now - i * 864e5); seq.push([k, byDay[k] || 0]); }
+  const mx = Math.max(1, ...seq.map(x => x[1]));
+  $("#uDaysCard").hidden = range < 2;
+  $("#uDays").innerHTML = seq.map(([k, v]) => `<i title="${esc(k.split("-").reverse().join("/"))}: ${v} usos" style="height:${v ? Math.max(4, Math.round(v / mx * 100)) : 1}%"></i>`).join("");
+  $("#uFeats").innerHTML = barList(topN(feats, 12), fName);
+  $("#uTools").innerHTML = barList(topN(tools, 20), tName);
+  const used = new Set(Object.keys(tools));
+  $("#uNone").innerHTML = TOOL_IDS.filter(i => !used.has(i)).map(i => `<span>${esc(tName(i))}</span>`).join("") || "Todas as ferramentas foram abertas.";
+  // pessoas
+  const win = x => Object.entries(x.dias || {}).filter(([k]) => k >= cut);
+  const rows = U_PPL.map(x => { const w = win(x), n = w.reduce((a, [, v]) => a + (+v || 0), 0); return { ...x, dn: w.length, un: n, tops: topN(x.t || {}, 10), fts: topN(x.f || {}, 6) }; });
+  const so = $("#uSort").value;
+  rows.sort((a, b) => so === "dias" ? b.dn - a.dn || b.un - a.un : so === "ultimo" ? b.em - a.em : b.un - a.un);
+  $("#uPpl").innerHTML = rows.map(x => `<details class="up" data-id="${esc(x.id)}"${abertos.has(x.id) ? " open" : ""}><summary><span class="ph">${esc((x.nome || x.email || "?")[0].toUpperCase())}</span><div class="sp"><b>${esc(x.nome || x.email)}</b><small>${esc(x.tops.slice(0, 3).map(([k]) => tName(k)).join(", ") || "sem ferramentas ainda")}</small></div>
+      <span class="num"><b>${x.dn}</b><small>dias ativos</small></span><span class="num"><b>${x.un}</b><small>usos</small></span><span class="it-d" style="min-width:90px;text-align:right">${esc(ago(x.em))}</span></summary>
+      <div class="up-b"><div style="font-size:13px;color:var(--tx3);margin-bottom:6px">${esc(x.email)} · v${esc(x.versao || "?")} · todas as datas desde o primeiro uso</div>
+      <div class="u-grid" style="margin-top:0"><div><b style="font-size:13px">Ferramentas</b>${x.tops.map(([k, v]) => `<div class="u-row"><span>${esc(tName(k))}</span><b>${v}</b></div>`).join("") || '<div class="hint">Nenhuma ainda.</div>'}</div>
+      <div><b style="font-size:13px">Recursos do hub</b>${x.fts.map(([k, v]) => `<div class="u-row"><span>${esc(fName(k))}</span><b>${v}</b></div>`).join("") || '<div class="hint">Nenhum ainda.</div>'}</div></div></div></details>`).join("")
+    || `<div class="empty">Ninguém registrou uso ainda. Os dados aparecem para quem estiver na versão 7.21.26 ou mais nova.</div>`;
+  // ao vivo: quem mexeu nos últimos 15 minutos e no quê
+  const agora = U_PPL.filter(x => now - (x.ultimoEm || x.em) < 15 * 60e3).sort((a, b) => (b.ultimoEm || b.em) - (a.ultimoEm || a.em));
+  $("#uNow").innerHTML = agora.map(x => { const t = x.ultimoEm || x.em, on = now - t < 5 * 60e3, what = x.ultimo ? (x.ultimoTipo === "t" ? tName(x.ultimo) : fName(x.ultimo)) : "";
+    return `<div class="u-row"><span><span class="dot" style="display:inline-block;margin-right:8px;background:${on ? "var(--ok)" : "var(--line2)"}"></span><b>${esc(x.nome || x.email)}</b>${what ? ` <span style="color:var(--tx2)">· ${esc(what)}</span>` : ""}</span><span class="it-d">${esc(ago(t))}</span></div>`; }).join("") || '<div class="hint">Ninguém usou o hub nos últimos 15 minutos.</div>';
+  // versões e inativos
+  const vers = {}; U_PPL.forEach(x => { const v = x.versao || "?"; vers[v] = (vers[v] || 0) + 1; });
+  $("#uVers").innerHTML = barList(Object.entries(vers).sort((a, b) => newer(a[0], b[0]) ? -1 : 1), v => "v" + v);
+  const idle = U_PPL.filter(x => now - x.em >= 14 * 864e5);
+  $("#uIdle").innerHTML = idle.map(x => `<div class="u-row"><span>${esc(x.nome || x.email)}</span><span class="it-d">${esc(ago(x.em))}</span></div>`).join("") || '<div class="hint">Todo mundo acessou nas últimas duas semanas.</div>';
+}
+$("#uRef").onclick = loadUso; $("#uRange").onchange = drawUso; $("#uSort").onchange = drawUso;
+$("#uCsv").onclick = () => {
+  const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const rows = [["Pessoa", "E-mail", "Versão", "Último acesso", "Dias ativos (total)", "Usos (total)", "Ferramentas mais usadas", "Recursos do hub"].map(q).join(";")].concat(U_PPL.map(x => {
+    const dias = Object.keys(x.dias || {}).length, n = Object.values(x.dias || {}).reduce((a, b) => a + (+b || 0), 0);
+    return [x.nome, x.email, x.versao, new Date(x.em).toLocaleString("pt-BR"), dias, n, topN(x.t || {}, 10).map(([k, v]) => tName(k) + " (" + v + ")").join(", "), topN(x.f || {}, 10).map(([k, v]) => fName(k) + " (" + v + ")").join(", ")].map(q).join(";"); }));
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + rows.join("\n")], { type: "text/csv;charset=utf-8" })); a.download = "uso-avant-hub.csv"; a.click();
+};
 
 // avisos para colegas
 let AVP = [], AVL = [], PGL = [], avBusy = false, avKind = "ind", AVIMG = [], avModo = "popup";
