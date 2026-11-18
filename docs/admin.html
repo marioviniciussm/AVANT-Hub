@@ -246,7 +246,7 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, deleteDoc, updateDoc, Bytes, collection, getDocs, query, orderBy, limit, documentId } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc, updateDoc, Bytes, collection, getDocs, query, orderBy, limit, documentId, where } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 const app = initializeApp({
   apiKey: "AIzaSyCYe4xuoxPTxrATPui_2UJCKVIE92XYkDA", authDomain: "avant-hub-c7f41.firebaseapp.com", projectId: "avant-hub-c7f41",
   storageBucket: "avant-hub-c7f41.firebasestorage.app", messagingSenderId: "851305378186", appId: "1:851305378186:web:6e9f3385f019ba446c9873"
@@ -395,10 +395,10 @@ async function loadUso() {
   $("#uRef").disabled = true; $("#uAt").textContent = "Atualizando…";
   try {
     const [d, p] = await Promise.all([
-      getDocs(query(collection(db, "usoDia"), orderBy(documentId(), "desc"), limit(90))),
+      getDocs(query(collection(db, "usoDia"), where(documentId(), ">=", new Date(Date.now() - 90 * 864e5).toLocaleDateString("sv-SE")), limit(100))),
       getDocs(query(collection(db, "uso"), orderBy("em", "desc"), limit(500))),
     ]);
-    U_DAYS = d.docs.map(x => ({ id: x.id, ...x.data() }));
+    U_DAYS = d.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => b.id.localeCompare(a.id));
     U_PPL = p.docs.map(x => ({ id: x.id, ...x.data() }));
     $("#uAt").textContent = "Atualizado às " + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     drawUso();
