@@ -102,6 +102,57 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
 .up .num{min-width:70px;text-align:right;font-variant-numeric:tabular-nums}.up .num b{display:block;font-size:16px;color:var(--pri-dd)}.up .num small{color:var(--tx3);font-size:12px}
 .up-b{padding:4px 16px 16px 62px;background:var(--panel2)}
 .u-row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}.u-row:last-child{border-bottom:0}
+
+/* ===== visual novo ===== */
+:root{--r:10px;--sh:0 1px 2px rgba(16,32,63,.06),0 4px 14px rgba(16,32,63,.05);--bg:#f4f6fb}
+button,input,select,textarea{border-radius:8px}
+body{background:var(--bg)}
+.shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.side{background:var(--pri-dd);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:20px 14px;gap:18px}
+.side .brand{border:0;padding:4px 10px;font-size:22px;flex-direction:column;align-items:flex-start;gap:2px}
+.side .brand small{color:var(--sec)}
+.nav{display:flex;flex-direction:column;gap:4px;flex:1}
+.nv{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:10px;background:none;color:rgba(255,255,255,.78);font-weight:500;font-size:14.5px;cursor:pointer;text-align:left}
+.nv svg{width:20px;height:20px;fill:currentColor;flex:none;opacity:.9}
+.nv:hover{background:rgba(255,255,255,.09);color:#fff}
+.nv.on{background:#fff;color:var(--pri);font-weight:700}
+.nv .n{margin-left:auto;font-style:normal;background:var(--sec);color:var(--on-sec);font-size:12px;font-weight:700;border-radius:99px;padding:1px 8px;min-width:22px;text-align:center}
+.side .who{flex-direction:column;align-items:stretch;gap:8px;padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.14);font-size:12.5px;word-break:break-all}
+.side .who .ghost{height:34px;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff}
+.side .who .ghost:hover{background:rgba(255,255,255,.18)}
+.content{min-width:0}
+.seg{display:inline-flex;gap:4px;margin:24px 0 0 28px;padding:4px;background:#e4e9f4;border-radius:12px}
+.seg button{border:0;background:none;padding:8px 18px;border-radius:9px;font-weight:600;color:var(--tx2);cursor:pointer}
+.seg button:hover{color:var(--pri)}
+.seg button.on{background:#fff;color:var(--pri);box-shadow:var(--sh)}
+.wrap{max-width:1040px;margin:0;padding:22px 28px 60px}
+h1{font-size:26px;letter-spacing:-.2px}
+.sub{max-width:72ch;font-size:13.5px}
+.btn{border-radius:8px;height:38px}
+.ghost{border-radius:8px;height:36px;background:#fff}
+.card,.list,.stats,.login,.prev,.av-people{border-radius:var(--r);box-shadow:var(--sh);border-color:var(--line)}
+.list,.stats{overflow:hidden}
+.stat{padding:16px 20px}
+.stat b{font-size:30px}
+.it{border-left-width:4px}
+.it-h{padding:13px 18px}
+.tag,.u-chips span{border-radius:99px}
+.tools input,.tools select,.card input[type=file],.card textarea,.it-b textarea{border-radius:8px;background:#fff}
+.u-days i,.ub .ubar,.ub .ubar i,.bar,.bar i{border-radius:4px}
+.alert{border-radius:0 0 12px 12px}
+.ph{border-radius:50%}
+.login{margin:14vh auto;padding:40px 32px}
+.login h1{font-size:30px}
+@media(max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px 12px;gap:8px}
+  .side .brand{flex-direction:row;align-items:center;gap:8px;font-size:18px;padding:0 6px}
+  .nav{flex-direction:row;flex:1 1 100%;order:3;overflow-x:auto}
+  .nv{width:auto;white-space:nowrap;padding:9px 12px}
+  .side .who{flex-direction:row;align-items:center;border:0;padding:0;margin-left:auto}
+  .side .who span{display:none}
+  .seg{margin:16px 0 0 16px}.wrap{padding:18px 16px 50px}
+}
 </style></head><body>
 <div id="gate" class="login">
   <h1>AVANT Hub</h1>
@@ -112,18 +163,19 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
 
 <div id="panel" hidden>
   <div class="alert" id="alert" role="alert" hidden></div>
-  <header class="top">
+  <div class="shell">
+  <aside class="side">
     <div class="brand">Hub <small>Administração</small></div>
-    <nav class="tabs">
-      <button class="tab on" data-tab="fb">Relatos <span class="n" id="nNovos" hidden>0</span></button>
-      <button class="tab" data-tab="ppl">Pessoas</button>
-      <button class="tab" data-tab="uso">Uso</button>
-      <button class="tab" data-tab="av">Avisos</button>
-      <button class="tab" data-tab="pub">Publicar versão</button>
-      <button class="tab" data-tab="hist">Versões publicadas</button>
+    <nav class="nav" id="nav">
+      <button class="nv on" data-g="fb"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg><span>Relatos</span><i class="n" id="nNovos" hidden>0</i></button>
+      <button class="nv" data-g="pp"><svg viewBox="0 0 24 24"><path d="M16 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3zM8 11a3 3 0 1 0-3-3 3 3 0 0 0 3 3zm0 2c-2.3 0-7 1.2-7 3.5V19h14v-2.5C15 14.2 10.3 13 8 13zm8 0c-.3 0-.6 0-1 .1 1.2.9 2 2 2 3.4V19h6v-2.5c0-2.3-4.700-3.500-7-3.500z"/></svg><span>Pessoas e uso</span></button>
+      <button class="nv" data-g="av"><svg viewBox="0 0 24 24"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11a6 6 0 0 0-5-5.900V4a1 1 0 0 0-2 0v1.100A6 6 0 0 0 6 11v5l-2 2v1h16v-1z"/></svg><span>Avisos</span></button>
+      <button class="nv" data-g="vr"><svg viewBox="0 0 24 24"><path d="M12 3l-7 7h4v6h6v-6h4zM5 19h14v2H5z"/></svg><span>Versões</span></button>
     </nav>
-    <div class="who"><span id="whoMail"></span><button class="ghost" id="logout" style="height:32px">Sair</button></div>
-  </header>
+    <div class="who"><span id="whoMail"></span><button class="ghost" id="logout">Sair</button></div>
+  </aside>
+  <div class="content">
+  <div class="seg" id="seg" hidden></div>
 
   <main class="wrap" id="p-fb">
     <h1>Relatos</h1>
@@ -240,6 +292,8 @@ h1{font-size:28px;font-weight:700;color:var(--pri-dd);margin:0 0 4px}
     <p class="sub">Tudo o que já foi publicado, da mais nova para a mais antiga.</p>
     <div class="list" id="relList"><div class="empty">Carregando…</div></div>
   </main>
+  </div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -301,14 +355,30 @@ function fbErr(e) {
 const TIPO = { erro: "Erro", problema: "Problema", sugestao: "Sugestão" }, STAT = { novo: "Novo", andamento: "Em andamento", resolvido: "Resolvido" };
 
 // abas
-document.querySelectorAll(".tab").forEach(b => b.onclick = () => {
-  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
-  for (const k of ["fb", "ppl", "uso", "av", "pub", "hist"]) $("#p-" + k).hidden = k !== b.dataset.tab;
-  if (b.dataset.tab === "av") loadAv();
-  if (b.dataset.tab === "hist") loadRel();
-  if (b.dataset.tab === "ppl") loadPpl();
-  if (b.dataset.tab === "uso" && !uLoaded) { uLoaded = true; loadUso(); }
-});
+const GROUPS = { fb: [["fb", "Relatos"]], pp: [["ppl", "Quem acessou"], ["uso", "Uso e ferramentas"]], av: [["av", "Avisos"]], vr: [["pub", "Publicar"], ["hist", "Publicadas"]] };
+let curGroup = "fb";
+function showView(k) {
+  for (const v of ["fb", "ppl", "uso", "av", "pub", "hist"]) $("#p-" + v).hidden = v !== k;
+  document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("on", x.dataset.v === k));
+  try { sessionStorage.setItem("admView", k); } catch {}
+  if (k === "av") loadAv();
+  if (k === "hist") loadRel();
+  if (k === "ppl") loadPpl();
+  if (k === "uso" && !uLoaded) { uLoaded = true; loadUso(); }
+}
+function showGroup(g, v) {
+  curGroup = g;
+  document.querySelectorAll("#nav .nv").forEach(x => x.classList.toggle("on", x.dataset.g === g));
+  const items = GROUPS[g];
+  const seg = $("#seg");
+  seg.hidden = items.length < 2;
+  seg.innerHTML = items.map(([k, t]) => `<button type="button" data-v="${k}">${t}</button>`).join("");
+  seg.querySelectorAll("button").forEach(b => b.onclick = () => showView(b.dataset.v));
+  showView(v && items.some(i => i[0] === v) ? v : items[0][0]);
+}
+document.querySelectorAll("#nav .nv").forEach(b => b.onclick = () => showGroup(b.dataset.g));
+try { const v = sessionStorage.getItem("admView"); const g = Object.keys(GROUPS).find(k => GROUPS[k].some(i => i[0] === v)); if (g && v !== "fb") showGroup(g, v); } catch {}
+
 
 // relatos
 let ALL = [], fStat = "", openId = "";
@@ -381,9 +451,9 @@ async function loadPpl() {
 
 
 // uso: ferramentas e recursos mais usados, por pessoa
-const TOOL_IDS = ["algebra-calc", "artwork-enhancer", "audio-atlas", "audio-extractor", "audio-normaliser", "audio-trimmer", "auto-subtitle", "background-remover", "base-converter", "base64-image-encoder", "braille-converter", "brand-kit", "code-genny", "colorblind-sim", "colour-atlas", "colour-converter", "consulta-cnpj", "contador-redes", "contrast-checker", "conversor", "cron-builder", "decoder", "doc-converter", "encoder", "favicon-genny", "font-explorer", "frame-extractor", "glyph-browser", "gradient-genny", "graph-calc", "harmony-genny", "http-status", "image-atlas", "image-clipper", "image-compressor", "image-converter", "image-deskewer", "image-masker", "image-splitter", "image-stitcher", "image-to-pdf", "image-tracer", "imposer", "ipa-transcriber", "json-formatter", "jwt-decoder", "large-type", "line-height-calc", "lote-imagens", "markdown-writer", "matte-genny", "meta-tag-genny", "metadata-stripper", "minhas-gravacoes", "morse-code", "nato-phonetic", "palette-collection", "palette-extractor", "palette-genny", "paper-sizes", "password-genny", "paste-image", "pdf-compressor", "pdf-organiser", "pdf-page-numberer", "pdf-preflight", "pdf-rotate-crop", "pixel-picker", "placeholder-genny", "previa-perfil", "previa-post", "px-to-rem", "qr-genny", "recipe-table", "regex-tester", "request-builder", "salvos", "sci-calc", "screen-recorder", "scroll-genny", "shavian-transliterator", "social-cropper", "stupid-units", "subtitle-converter", "subtitle-studio", "svg-optimiser", "tailwind-cheatsheet", "tailwind-shades", "text-diff", "text-editor", "texto-ferramentas", "time-calc", "timecode-calc", "typo-calc", "unit-converter", "utm-genny", "uuid-genny", "video-atlas", "video-muter", "video-to-gif", "video-trimmer", "voice-recorder", "watermarker", "waveform-genny", "word-counter", "zine-imposer"];
+const TOOL_IDS = ["encurtador-links","links-rastreio", "algebra-calc", "artwork-enhancer", "audio-atlas", "audio-extractor", "audio-normaliser", "audio-trimmer", "auto-subtitle", "background-remover", "base-converter", "base64-image-encoder", "braille-converter", "brand-kit", "code-genny", "colorblind-sim", "colour-atlas", "colour-converter", "consulta-cnpj", "contador-redes", "contrast-checker", "conversor", "cron-builder", "decoder", "doc-converter", "encoder", "favicon-genny", "font-explorer", "frame-extractor", "glyph-browser", "gradient-genny", "graph-calc", "harmony-genny", "http-status", "image-atlas", "image-clipper", "image-compressor", "image-converter", "image-deskewer", "image-masker", "image-splitter", "image-stitcher", "image-to-pdf", "image-tracer", "imposer", "ipa-transcriber", "json-formatter", "jwt-decoder", "large-type", "line-height-calc", "lote-imagens", "markdown-writer", "matte-genny", "meta-tag-genny", "metadata-stripper", "minhas-gravacoes", "morse-code", "nato-phonetic", "palette-collection", "palette-extractor", "palette-genny", "paper-sizes", "password-genny", "paste-image", "pdf-compressor", "pdf-organiser", "pdf-page-numberer", "pdf-preflight", "pdf-rotate-crop", "pixel-picker", "placeholder-genny", "previa-perfil", "previa-post", "px-to-rem", "qr-genny", "recipe-table", "regex-tester", "request-builder", "salvos", "sci-calc", "screen-recorder", "scroll-genny", "shavian-transliterator", "social-cropper", "stupid-units", "subtitle-converter", "subtitle-studio", "svg-optimiser", "tailwind-cheatsheet", "tailwind-shades", "text-diff", "text-editor", "texto-ferramentas", "time-calc", "timecode-calc", "typo-calc", "unit-converter", "utm-genny", "uuid-genny", "video-atlas", "video-muter", "video-to-gif", "video-trimmer", "voice-recorder", "watermarker", "waveform-genny", "word-counter", "zine-imposer"];
 const FEAT = { inicio: "Início", "banco-de-midia": "Banco de mídia", "analise-de-mercado": "Análise de mercado", avantools: "AVANTools", "kit-da-marca": "Kit da marca", colecoes: "Coleções", busca: "Buscas feitas", download: "Downloads", "contas-das-plataformas": "Contas das plataformas", sessao: "Aberturas do hub" };
-const TOOL_NAMES = {"algebra-calc": "Calculadora de álgebra", "artwork-enhancer": "Textura para arte", "audio-atlas": "Atlas de áudio", "audio-extractor": "Extrator de áudio", "audio-normaliser": "Normalizador de áudio", "audio-trimmer": "Cortador de áudio", "auto-subtitle": "Transcrever áudio e vídeo", "background-remover": "Removedor de fundo", "base-converter": "Conversor de bases", "base64-image-encoder": "Imagem para Base64", "braille-converter": "Conversor de Braille", "brand-kit": "Kit da marca AVANT", "code-genny": "Gerador de código de barras", "colorblind-sim": "Simulador de daltonismo", "colour-atlas": "Atlas de cor", "colour-converter": "Conversor de cor", "consulta-cnpj": "Consulta de CNPJ", "contador-redes": "Contador por rede", "contrast-checker": "Verificador de contraste", "conversor": "Conversor e compressor", "cron-builder": "Montador de Cron", "decoder": "Decodificador de cifras", "doc-converter": "Conversor de documentos", "encoder": "Codificação e hash", "favicon-genny": "Gerador de favicon", "font-explorer": "Explorador de fontes", "frame-extractor": "Extrator de quadros", "glyph-browser": "Navegador de glifos", "gradient-genny": "Gerador de degradê", "graph-calc": "Calculadora gráfica", "harmony-genny": "Gerador de harmonias", "http-status": "Códigos HTTP", "image-atlas": "Atlas de imagem", "image-clipper": "Aparar imagem", "image-compressor": "Compressor de imagem", "image-converter": "Conversor de imagem", "image-deskewer": "Endireitar imagem", "image-masker": "Máscara de imagem", "image-splitter": "Divisor de imagem", "image-stitcher": "Unir imagens", "image-to-pdf": "Imagens para PDF", "image-tracer": "Vetorizar imagem", "imposer": "Imposição de impressão", "ipa-transcriber": "Transcrição IPA", "json-formatter": "Formatador de JSON", "jwt-decoder": "Decodificador JWT", "large-type": "Texto grande", "line-height-calc": "Calculadora de entrelinha", "lote-imagens": "Lote de imagens", "markdown-writer": "Bloco de notas", "matte-genny": "Gerador de fundo quadrado", "meta-tag-genny": "Gerador de meta tags", "metadata-stripper": "Remover metadados", "minhas-gravacoes": "Minhas gravações", "morse-code": "Código Morse", "nato-phonetic": "Alfabeto fonético", "palette-collection": "Coleção de paletas", "palette-extractor": "Extrator de paleta", "palette-genny": "Gerador de paletas", "paper-sizes": "Tamanhos de papel", "password-genny": "Gerador de senhas", "paste-image": "Colar imagem", "pdf-compressor": "Compressor de PDF", "pdf-organiser": "Organizador de PDF", "pdf-page-numberer": "Numeração de páginas PDF", "pdf-preflight": "Verificação de PDF", "pdf-rotate-crop": "Girar e cortar PDF", "pixel-picker": "Conta-gotas de pixel", "placeholder-genny": "Gerador de imagem placeholder", "previa-perfil": "Prévia do perfil", "previa-post": "Prévia do post", "px-to-rem": "PX to REM", "qr-genny": "Gerador de QR Code", "recipe-table": "Tabela de receita", "regex-tester": "Testador de Regex", "request-builder": "Montador de requisições", "salvos": "Guardados", "sci-calc": "Calculadora científica", "screen-recorder": "Gravador de tela", "scroll-genny": "Gerador de carrossel contínuo", "shavian-transliterator": "Transliterador Shaviano", "social-cropper": "Cortes para redes sociais", "stupid-units": "Unidades malucas", "subtitle-converter": "Conversor de legendas", "subtitle-studio": "Estúdio de legendas", "svg-optimiser": "Otimizador de SVG", "tailwind-cheatsheet": "Guia rápido Tailwind", "tailwind-shades": "Gerador de tons Tailwind", "text-diff": "Comparar textos", "text-editor": "Editor de texto", "texto-ferramentas": "Ferramentas de texto", "time-calc": "Calculadora de tempo", "timecode-calc": "Calculadora de timecode", "typo-calc": "Calculadora tipográfica", "unit-converter": "Conversor de unidades", "utm-genny": "Gerador de UTM", "uuid-genny": "Gerador de UUID", "video-atlas": "Atlas de vídeo", "video-muter": "Silenciar vídeo", "video-to-gif": "Vídeo para GIF", "video-trimmer": "Cortador de vídeo", "voice-recorder": "Gravador de voz", "watermarker": "Marca d'água", "waveform-genny": "Gerador de forma de onda", "word-counter": "Contador de palavras", "zine-imposer": "Imposição de zine"};
+const TOOL_NAMES = {"encurtador-links": "Encurtador de links", "links-rastreio": "Links com rastreio", "algebra-calc": "Calculadora de álgebra", "artwork-enhancer": "Textura para arte", "audio-atlas": "Atlas de áudio", "audio-extractor": "Extrator de áudio", "audio-normaliser": "Normalizador de áudio", "audio-trimmer": "Cortador de áudio", "auto-subtitle": "Transcrever áudio e vídeo", "background-remover": "Removedor de fundo", "base-converter": "Conversor de bases", "base64-image-encoder": "Imagem para Base64", "braille-converter": "Conversor de Braille", "brand-kit": "Kit da marca AVANT", "code-genny": "Gerador de código de barras", "colorblind-sim": "Simulador de daltonismo", "colour-atlas": "Atlas de cor", "colour-converter": "Conversor de cor", "consulta-cnpj": "Consulta de CNPJ", "contador-redes": "Contador por rede", "contrast-checker": "Verificador de contraste", "conversor": "Conversor e compressor", "cron-builder": "Montador de Cron", "decoder": "Decodificador de cifras", "doc-converter": "Conversor de documentos", "encoder": "Codificação e hash", "favicon-genny": "Gerador de favicon", "font-explorer": "Explorador de fontes", "frame-extractor": "Extrator de quadros", "glyph-browser": "Navegador de glifos", "gradient-genny": "Gerador de degradê", "graph-calc": "Calculadora gráfica", "harmony-genny": "Gerador de harmonias", "http-status": "Códigos HTTP", "image-atlas": "Atlas de imagem", "image-clipper": "Aparar imagem", "image-compressor": "Compressor de imagem", "image-converter": "Conversor de imagem", "image-deskewer": "Endireitar imagem", "image-masker": "Máscara de imagem", "image-splitter": "Divisor de imagem", "image-stitcher": "Unir imagens", "image-to-pdf": "Imagens para PDF", "image-tracer": "Vetorizar imagem", "imposer": "Imposição de impressão", "ipa-transcriber": "Transcrição IPA", "json-formatter": "Formatador de JSON", "jwt-decoder": "Decodificador JWT", "large-type": "Texto grande", "line-height-calc": "Calculadora de entrelinha", "lote-imagens": "Lote de imagens", "markdown-writer": "Bloco de notas", "matte-genny": "Gerador de fundo quadrado", "meta-tag-genny": "Gerador de meta tags", "metadata-stripper": "Remover metadados", "minhas-gravacoes": "Minhas gravações", "morse-code": "Código Morse", "nato-phonetic": "Alfabeto fonético", "palette-collection": "Coleção de paletas", "palette-extractor": "Extrator de paleta", "palette-genny": "Gerador de paletas", "paper-sizes": "Tamanhos de papel", "password-genny": "Gerador de senhas", "paste-image": "Colar imagem", "pdf-compressor": "Compressor de PDF", "pdf-organiser": "Organizador de PDF", "pdf-page-numberer": "Numeração de páginas PDF", "pdf-preflight": "Verificação de PDF", "pdf-rotate-crop": "Girar e cortar PDF", "pixel-picker": "Conta-gotas de pixel", "placeholder-genny": "Gerador de imagem placeholder", "previa-perfil": "Prévia do perfil", "previa-post": "Prévia do post", "px-to-rem": "PX to REM", "qr-genny": "Gerador de QR Code", "recipe-table": "Tabela de receita", "regex-tester": "Testador de Regex", "request-builder": "Montador de requisições", "salvos": "Guardados", "sci-calc": "Calculadora científica", "screen-recorder": "Gravador de tela", "scroll-genny": "Gerador de carrossel contínuo", "shavian-transliterator": "Transliterador Shaviano", "social-cropper": "Cortes para redes sociais", "stupid-units": "Unidades malucas", "subtitle-converter": "Conversor de legendas", "subtitle-studio": "Estúdio de legendas", "svg-optimiser": "Otimizador de SVG", "tailwind-cheatsheet": "Guia rápido Tailwind", "tailwind-shades": "Gerador de tons Tailwind", "text-diff": "Comparar textos", "text-editor": "Editor de texto", "texto-ferramentas": "Ferramentas de texto", "time-calc": "Calculadora de tempo", "timecode-calc": "Calculadora de timecode", "typo-calc": "Calculadora tipográfica", "unit-converter": "Conversor de unidades", "utm-genny": "Gerador de UTM", "uuid-genny": "Gerador de UUID", "video-atlas": "Atlas de vídeo", "video-muter": "Silenciar vídeo", "video-to-gif": "Vídeo para GIF", "video-trimmer": "Cortador de vídeo", "voice-recorder": "Gravador de voz", "watermarker": "Marca d'água", "waveform-genny": "Gerador de forma de onda", "word-counter": "Contador de palavras", "zine-imposer": "Imposição de zine"};
 const tName = id => TOOL_NAMES[id] || (String(id).replace(/-/g, " ").replace(/^./, c => c.toUpperCase()));
 const fName = id => FEAT[id] || tName(id);
 let U_DAYS = [], U_PPL = [];
