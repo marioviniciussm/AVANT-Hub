@@ -403,7 +403,7 @@ function drawFb() {
     return `<div class="it s-${s} ${o ? "open" : ""}" data-id="${x.id}">
       <button class="it-h"><span class="tag t-${esc(x.tipo)}">${esc(TIPO[x.tipo] || x.tipo)}</span><span class="it-t">${esc(x.texto)}</span><span class="tag st-${s}">${STAT[s]}</span><span class="it-d">${esc(when(x.em))}</span></button>
       ${o ? `<div class="it-b"><div class="meta"><span><b>${esc(x.email || "sem e-mail")}</b></span><span>Versão <b>${esc(x.versao)}</b></span><span>Tela <b>${esc(x.onde)}</b></span><span>${esc(x.navegador || "")}</span></div>
-        <p>${esc(x.texto)}</p>
+        <p>${esc(x.texto)}</p>${pics(x.imagens)}
         <div class="lbl">Sua anotação (só você vê)</div><textarea data-nota placeholder="Ex.: corrigido na 7.19.2">${esc(x.nota || "")}</textarea>
         <div class="row"><button class="ghost" data-set="novo">Novo</button><button class="ghost" data-set="andamento">Em andamento</button><button class="btn" data-set="resolvido">Marcar como resolvido</button><span style="flex:1"></span><button class="ghost del" data-del>Apagar de vez</button></div>
         ${x.resolvidoEm ? `<div class="it-d" style="margin-top:8px">Resolvido em ${esc(when(x.resolvidoEm))}</div>` : ""}</div>` : ""}</div>`;
